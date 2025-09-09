@@ -1,0 +1,14 @@
+{
+  "name": "node-k8s-demo",
+  "version": "1.0.0",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "express": "^4.18.0"
+  },
+  "engines": {
+    "node": "18.x"
+  }
+}
