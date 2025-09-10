@@ -6,6 +6,21 @@ kubectl apply -f k8s/
 hey -z 5m -q 100 -c 50 http://$(kubectl get svc hello-service -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 kubectl get hpa -w
 
+when monitoring for hpa sometimes the monitoring server needs to be installed:
+
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+then patched:
+
+kubectl patch deploy -n kube-system metrics-server \
+  --type 'json' \
+  -p='[{"op": "add", "path": "/spec/template/spec/containers/0/args", "value": [
+    "--kubelet-insecure-tls",
+    "--kubelet-preferred-address-types=InternalIP"
+  ]}]'
+
+use this when the monitoring server seems a bit wonky or doesnt return actul data or numbers.
+
 Scales from 1 → 5 pods under load
 
 Instal Helm and then make some monitoring.
@@ -49,4 +64,38 @@ From there you can make a few dashboards and then bring your up node app and tes
 
 for prebuilt dashabaords, the json I left in prebuilt folder.
 
-`
+updated added argoCD
+
+kubectl create namespace argocd
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+
+
+port forward so you can see it.
+
+kubectl port-forward svc/argocd-server -n argocd 8080:443
+
+
+Also when fixing the hpa stats you will sometimes get unknown can be fix with the follwing below.
+
+
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+kubectl patch deploy -n kube-system metrics-server \
+  --type 'json' \
+  -p='[{"op": "add", "path": "/spec/template/spec/containers/0/args", "value": [
+    "--kubelet-insecure-tls",
+    "--kubelet-preferred-address-types=InternalIP"
+  ]}]'
+
+final teardown.
+
+
+kubectl delete -f k8s/
+helm uninstall prometheus -n monitoring
+kubectl delete namespace monitoring
+kubectl delete namespace argocd
+
+
+dont forget that when using argo you can get passwords from the follwing:
+kubectl get secret -n argocd argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+
+
